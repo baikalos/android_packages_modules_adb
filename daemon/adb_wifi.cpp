@@ -157,10 +157,13 @@ const char kWifiEnabledProp[] = "persist.adb.tls_server.enable";
 static void enable_wifi_debugging() {
     start_mdnsd();
 
+    std::string port_str = android::base::GetProperty("persist.adb.tls_server.port", "0");
+    int port = atoi(port_str.c_str());
+    
     if (sTlsServer != nullptr) {
         delete sTlsServer;
     }
-    sTlsServer = new TlsServer(0);
+    sTlsServer = new TlsServer(port);
     if (!sTlsServer->Start()) {
         LOG(ERROR) << "Failed to start TlsServer";
         delete sTlsServer;
@@ -172,6 +175,7 @@ static void enable_wifi_debugging() {
     register_adb_secure_connect_service(sTlsServer->port());
     LOG(INFO) << "adb wifi started on port " << sTlsServer->port();
     SetProperty(kWifiPortProp, std::to_string(sTlsServer->port()));
+    SetProperty("persist.adb.tls_server.port", std::to_string(sTlsServer->port()));
 }
 
 static void disable_wifi_debugging() {
